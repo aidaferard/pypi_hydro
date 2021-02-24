@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
 import RPi.GPIO as GPIO
-import arduino_data
-
-GPIO.setmode(GPIO.BOARD)
+import uno3_data
+import time
 
 GPIO.setmode(GPIO.BOARD)
 
 # TODO Decide on pH level limit
-ph_limit = 7.5
+ph_limit = 6.0
 # TODO Decide on Nutrient level
 ec_limit = 0
 ec_range = 100
@@ -29,8 +28,8 @@ def check_ph(limit):
   """Checks the current pH level is lower than the set limit,
     if it's higher, call adjust_ph() to lower ph
   """
-  ph_level = arduino_data.current_ph_level()
-  if ph_level > limit:
+  ph_level = uno3_data.current_ph_level()
+  if ph_level - 0.5 > limit:
     adjust_ph()
   print('Current pH: {}'.format(ph_level))
 
@@ -53,7 +52,7 @@ def check_nutrients(limit):
   """Checks the current nutrient level is in a specified range based on
     the data recieved from the ec sensor
   """
-  ec_level = arduino_data.current_ec_level()
+  ec_level = uno3_data.current_ec_level()
   if ec_level - ec_range > limit:
     print('Alert: Nutrients Low - Adding Nutrients and Rechecking')
     add_nutrients()
