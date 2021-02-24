@@ -6,30 +6,30 @@ import time
 
 GPIO.setmode(GPIO.BOARD)
 
-# TODO Decide on pH level limit
-ph_limit = 6.0
-# TODO Decide on Nutrient level
-ec_limit = 0
-ec_range = 100
-# TODO Assign output pin numbers for: Water Pump, Nutrient Pump, pH pump, lights, air pump
+# Recommended pH level 5.5 - 6.5
+ph_low = 5.5
+ph_high = 6.5
+# TODO make these values settable, maybe use ENV variables
+# Recommended safe Nutrient level for all plants 1.2 - 1.6
+ec_low = 1.2
+ec_high = 1.6
+# TODO Assign output pin numbers for: Water Pump, Nutrient Pump, pH pump, air pump
 water_pump = 1
 nutrient_pump = 2
 ph_pump = 3
 air_pump = 4
-lights = 5
 
 GPIO.setup(water_pump, GPIO.OUT)
 GPIO.setup(nutrient_pump, GPIO.OUT)
 GPIO.setup(ph_pump, GPIO.OUT)
 GPIO.setup(air_pump, GPIO.OUT)
-GPIO.setup(lights, GPIO.OUT)
 
-def check_ph(limit):
+def check_ph():
   """Checks the current pH level is lower than the set limit,
     if it's higher, call adjust_ph() to lower ph
   """
   ph_level = uno3_data.current_ph_level()
-  if ph_level - 0.5 > limit:
+  if ph_level > ph_high:
     adjust_ph()
   print('Current pH: {}'.format(ph_level))
 
@@ -48,15 +48,15 @@ def adjust_ph():
 
   check_ph(ph_limit)
 
-def check_nutrients(limit):
+def check_nutrients():
   """Checks the current nutrient level is in a specified range based on
     the data recieved from the ec sensor
   """
   ec_level = uno3_data.current_ec_level()
-  if ec_level - ec_range > limit:
+  if ec_level < ec_low:
     print('Alert: Nutrients Low - Adding Nutrients and Rechecking')
     add_nutrients()
-  elif ec_level + ec_range < limit:
+  elif ec_level > ec_high:
     add_water()
   print('Current Nutrient Level: {}'.format(ec_level))
 
@@ -73,11 +73,13 @@ def add_nutrients():
   time.sleep(90)
   GPIO.output(air_pump, GPIO.low)
 
-  check_nutrients(ph_limit)
+  check_nutrients()
 
-# TODO decide how I want to approach adding water to the system to finish function
+# TODO decide how to approach adding water to the system to finish function
 def add_water():
   """Needs to either alert user to add water to container or create system to
     automatically add water from either a seperate reservoir or spiget
   """
   print('ADD WATER')
+  time.sleep(300)
+  check_nutrients()
