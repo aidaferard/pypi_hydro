@@ -75,7 +75,7 @@ def add_nutrients():
 
   check_nutrients()
 
-# TODO decide how to approach adding water to the system to finish function
+# TODO Use Pushbullet to send notification to cell phone
 def add_water():
   """Needs to either alert user to add water to container or create system to
     automatically add water from either a seperate reservoir or spiget
@@ -83,3 +83,7 @@ def add_water():
   print('ADD WATER')
   time.sleep(300)
   check_nutrients()
+
+  
+
+  
