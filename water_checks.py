@@ -3,13 +3,15 @@
 import RPi.GPIO as GPIO
 import uno3_data
 import time
+import json
+import alerts
 
 GPIO.setmode(GPIO.BOARD)
 
 # Recommended pH level 5.5 - 6.5
 ph_low = 5.5
 ph_high = 6.5
-# TODO make these values settable, maybe use ENV variables
+# TODO make these values settable, set up json file to store data and different plant profiles
 # Recommended safe Nutrient level for all plants 1.2 - 1.6
 ec_low = 1.2
 ec_high = 1.6
@@ -18,11 +20,18 @@ water_pump = 1
 nutrient_pump = 2
 ph_pump = 3
 air_pump = 4
+water_scale = 5
+nutrient_scale = 6
+ph_scale = 7
 
 GPIO.setup(water_pump, GPIO.OUT)
 GPIO.setup(nutrient_pump, GPIO.OUT)
 GPIO.setup(ph_pump, GPIO.OUT)
 GPIO.setup(air_pump, GPIO.OUT)
+
+GPIO.setup(water_scale, GPIO.IN)
+GPIO.setup(nutrient_scale, GPIO.IN)
+GPIO.setup(ph_scale, GPIO.IN)
 
 def check_ph():
   """Checks the current pH level is lower than the set limit,
@@ -46,7 +55,7 @@ def adjust_ph():
   time.sleep(90)
   GPIO.output(air_pump, GPIO.low)
 
-  check_ph(ph_limit)
+  check_ph()
 
 def check_nutrients():
   """Checks the current nutrient level is in a specified range based on
@@ -57,7 +66,7 @@ def check_nutrients():
     print('Alert: Nutrients Low - Adding Nutrients and Rechecking')
     add_nutrients()
   elif ec_level > ec_high:
-    add_water()
+    dilute_nutrients(ec_level, ec_high)
   print('Current Nutrient Level: {}'.format(ec_level))
 
 def add_nutrients():
@@ -76,14 +85,74 @@ def add_nutrients():
   check_nutrients()
 
 # TODO Use Pushbullet to send notification to cell phone
-def add_water():
+def dilute_nutrients(nutrient_level, nutrient_high):
   """Needs to either alert user to add water to container or create system to
     automatically add water from either a seperate reservoir or spiget
   """
-  print('ADD WATER')
-  time.sleep(300)
-  check_nutrients()
+  alerts.send_alert('dilute-nutrients', nutrient_level)
 
+def check_liquid_levels():
+  """Reads the sensor data from the scales attached to the Pi's GPIO ports
+    then reads the weight of just the liquid of each when its full and the weight
+    of the container when its empty from a JSON file created by the 
+    set_liquid_weights() function
+  """
+  water_weight = GPIO.input(water_scale)
+  nutrient_weight = GPIO.input(nutrient_scale)
+  ph_weight = GPIO.input(ph_scale)
+
+  with open('<path to json file>') as weights_chart:
+    weights = json.load(weights_chart)
+  
+  ph_full_weight = weights['ph']['liquid_wieght']
+  ph_empty_weight = weights['ph']['empty_weight']
+  nutrient_full_weight = weights['nutrient']['liqiud_weight']
+  nutrient_empty_weight = weights['nutrient']['empty_weight']
+  water_full_weight = weights['water']['liquid_weight']
+  water_empty_weight = weights['water']['empty_weight']
+
+  ph_percentage = int(((ph_weight - ph_empty_weight) / ph_full_weight) * 100)
+  nutrient_percentage = int(((nutrient_weight - nutrient_empty_weight) / nutrient_full_weight) * 100)
+  water_percentage = int(((water_weight - water_empty_weight) / water_full_weight) * 100)
+
+  # TODO Decide on percentages for alerting, should probably be editable and saved in the JSON as well
+  if water_percentage < 50:
+    alerts.send_alert('water-level', water_percentage)
+  if nutrient_percentage < 50:
+    alerts.send_alert('nutrient-level', water_percentage)
+  if ph_percentage < 50:
+    alerts.send_alert('ph-level', water_percentage)
   
 
+  return water_percentage, nutrient_percentage, ph_percentage
+
+def set_liquid_weights(liquid, empty_weight, full_weight):
+  """Takes the values set by the user using the scale to measure each container
+    before and after it's been filled to calculate the liquid weight(full_weight - empty_weight)
+    then updates the json file with the new weights
+  """
+  liquid_weight = full_weight - empty_weight
   
+  # TODO create a json file with default values
+  with open('<Path to Json file>', 'w+') as weights:
+    json_weights = json.load(weights)
+    json_weights[liquid]['empty_weight'] = empty_weight
+    json_weights[liquid]['full_weight'] = full_weight
+    json_weights[liquid]['liquid_weight'] = liquid_weight
+    json.dump(json_weights, weights)
+
+def set_solution_levels(profile, ph_low, ph_high, ec_low, ec_high):
+  """Gathers data passed from the user interface and saves it to a json file to be
+    referenced later, also saving it under a profile name so it can be used again later
+    if it's a good setting
+  """
+  # TODO create a default json file with default values to start program
+  with open('<Path to Json file>', 'w+') as solution_profiles:
+    profiles = json.load(solution_profiles)
+    profiles[profile]['ph_low'] = ph_low
+    profiles[profile]['ph_high'] = ph_high
+    profiles[profile]['ec_low'] = ec_low
+    profiles[profile]['ec_high'] = ec_high
+    json.dump(profiles, solution_profiles)
+
+
