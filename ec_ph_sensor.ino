@@ -7,12 +7,15 @@
 
 */
 
+#define ph_sensor 0
+#define ec_sensor 1
+#define offset 0.00
 // Variables to be passed to Pi
-float ph_level = 0.0;
+unsigned long int avg_ph;
 float nutrient_level = 0.0;
 
 // Assigning pins to sensors
-int ph_sensor = A0;
+
 int ec_sensor = A1;
 
 void setup() {
@@ -21,11 +24,21 @@ void setup() {
 }
 
 void loop() {
-  ph_level = analogRead(ph_sensor);
   nutrient_level = analogRead(ec_sensor);
   
+  int buf[10];                //buffer to hold ph sensor values
+  for(int i=0;i<10;i++)       //Get 10 samples from the sensor to get better accuracy
+  { 
+    buf[i]=analogRead(ph_sensor);
+    delay(10);
+  }
+  avg_ph=0;
+  for(int i=0;i<10;i++)                     //adds together all samples to get an average
+    avg_ph+=buf[i];
+  float ph_level=(float)avg_ph*5.0/1024/6;    //convert analog input into millivolt
+  ph_level=3.5*ph_level+Offset;               //convert millivolts into pH value
   // Sends data through serial port
-  Serial.println(ph_level);
+  Serial.println(ph_level,2);
   Serial.println(nutrient_level);
 
   // Wait 60 seconds before updating levels again
