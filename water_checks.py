@@ -115,7 +115,8 @@ def check_liquid_levels():
   nutrient_percentage = int(((nutrient_weight - nutrient_empty_weight) / nutrient_full_weight) * 100)
   water_percentage = int(((water_weight - water_empty_weight) / water_full_weight) * 100)
 
-  # TODO Decide on percentages for alerting, should probably be editable and saved in the JSON as well
+  # TODO Decide on percentages for alerting, should probably be editable and saved in the
+  # JSON as well so they can be updated as we learn or the computer learns
   if water_percentage < 50:
     alerts.send_alert('water-level', water_percentage)
   if nutrient_percentage < 50:
@@ -126,19 +127,22 @@ def check_liquid_levels():
 
   return water_percentage, nutrient_percentage, ph_percentage
 
-def set_liquid_weights(liquid, empty_weight, full_weight):
+def set_liquid_weights(liquid, empty_weight, full_weight, volume):
   """Takes the values set by the user using the scale to measure each container
-    before and after it's been filled to calculate the liquid weight(full_weight - empty_weight)
-    then updates the json file with the new weights
+    before and after it's been filled and user inputed # of liters of liquid
+    to calculate the liquid weight then updates the json file with the new weights
   """
   liquid_weight = full_weight - empty_weight
-  
+  # TODO use liter_weight to calculate usage/day week and learn to predict future needs
+  liter_weight = liquid_weight / volume
+
   # TODO create a json file with default values
-  with open('<Path to Json file>', 'w+') as weights:
+  with open('config/liquid_weights.json', 'w+') as weights:
     json_weights = json.load(weights)
     json_weights[liquid]['empty_weight'] = empty_weight
     json_weights[liquid]['full_weight'] = full_weight
     json_weights[liquid]['liquid_weight'] = liquid_weight
+    json_weights[liquid]['liter_weight'] = liter_weight
     json.dump(json_weights, weights)
 
 def set_solution_levels(profile, ph_low, ph_high, ec_low, ec_high):
@@ -147,7 +151,7 @@ def set_solution_levels(profile, ph_low, ph_high, ec_low, ec_high):
     if it's a good setting
   """
   # TODO create a default json file with default values to start program
-  with open('<Path to Json file>', 'w+') as solution_profiles:
+  with open('config/solution_profiles.json', 'w+') as solution_profiles:
     profiles = json.load(solution_profiles)
     profiles[profile]['ph_low'] = ph_low
     profiles[profile]['ph_high'] = ph_high

@@ -1,0 +1,14 @@
+{
+    "Default": {
+        "ph_low": 5.5,
+        "ph_high": 6.5,
+        "ec_low": 1.2,
+        "ec_high": 1.6
+    },
+    "Tomatoes": {
+        "ph_low": 5.5,
+        "ph_high": 6.5,
+        "ec_low": 2.5,
+        "ec_high": 3.0
+    }
+}

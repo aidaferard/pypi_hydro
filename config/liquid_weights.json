@@ -1,0 +1,20 @@
+{
+    "ph": {
+        "empty_weight": 1 ,
+        "full_weight": 10,
+        "liquid_weight": 9,
+        "liter_weight": 2
+    },
+    "nutrients": {
+        "empty_weight": 1 ,
+        "full_weight": 10,
+        "liquid_weight": 9,
+        "liter_weight": 2
+    },
+    "water": {
+        "empty_weight": 1 ,
+        "full_weight": 10,
+        "liquid_weight": 9,
+        "liter_weight": 2
+    }
+}
