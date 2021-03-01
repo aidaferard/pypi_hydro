@@ -8,8 +8,8 @@ GPIO.setup(8, GPIO.OUT)
 
 power = 0
 
-def change_relay(power):
+def change_relay(relay, power):
     if power > 0:
-        GPIO.output(8, GPIO.high)
+        GPIO.output(relay, 1)
     else:
-        GPIO.output(8, GPIO.low)
+        GPIO.output(relay, 0)
